@@ -1,3 +1,4 @@
+
 import ROOT as rt
 
 # CMS_lumi
@@ -15,16 +16,16 @@ extraTextFont = 52
 lumiTextSize     = 0.3
 lumiTextOffset   = 0.3
 
-cmsTextSize      = 0.55
-cmsTextOffset    = 0.8
+cmsTextSize      = 0.35
+cmsTextOffset    = 0.3
 
-relPosX    = 0.8
+relPosX    = 0.04
 relPosY    = 0.035
 relExtraDY = 1.2
 
 extraOverCmsTextSize  = 0.76
-
-lumi_13TeV = "Simulation"
+#extraOverCmsTextSize = 0.3
+lumi_13TeV = "3.99 fb^{-1}"
 lumi_8TeV  = "19.7 fb^{-1}" 
 lumi_7TeV  = "5.1 fb^{-1}"
 
@@ -34,6 +35,7 @@ def CMS_lumi(pad,  iPeriod,  iPosX ):
     outOfFrame    = False
     if(iPosX/10==0 ): outOfFrame = True
 
+    #alignY_=3
     alignY_=3
     alignX_=2
     if( iPosX/10==0 ): alignX_=1
@@ -115,12 +117,12 @@ def CMS_lumi(pad,  iPeriod,  iPosX ):
     elif( iPosX%10==3 ):
         posX_ =  1-r - relPosX*(1-l-r)
 
-    posY_ = 1-t - relPosY*(1-t-b)
+    posY_ = 1 - relPosY*(1-t-b)
 
     if( not outOfFrame ):
         if( drawLogo ):
             posX_ =   l + 0.045*(1-l-r)*W/H
-            posY_ = 1-t - 0.045*(1-t-b)
+            posY_ = 1-t -0.045*(1-t-b)
             xl_0 = posX_
             yl_0 = posY_ - 0.15
             xl_1 = posX_ + 0.15*H/W
@@ -142,6 +144,7 @@ def CMS_lumi(pad,  iPeriod,  iPosX ):
                 latex.SetTextAlign(align_)
                 latex.SetTextSize(extraTextSize*t)
                 latex.DrawLatex(posX_, posY_- relExtraDY*cmsTextSize*t, extraText)
+                #latex.DrawLatex(posX_, posY_, extraText)
     elif( writeExtraText ):
         if( iPosX==0):
             posX_ =   l +  relPosX*(1-l-r)

@@ -1,7 +1,3 @@
-# python TagNProbeEfficiency.py --file=uhh2.AnalysisModuleRunner.MC.ZP3000w30.root --channel=e --tag=HLT_Mu45_eta2p1 --probe=HLT_Ele45_..._PFJet200PFJet50 --useOR=True  --sample=ZP3000w30
-
-
-
 import re
 import sys
 from ROOT import *
@@ -56,18 +52,39 @@ parser.add_option('--file', type='string', action='store',
                   help='File to be analyzed')
 
 
+parser.add_option('--tagdir', type='string', action='store',
+                  default='trigtag',
+                  dest='tagdir',
+                  help='Directory where the tag files are')
 
+
+parser.add_option('--probedir', type='string', action='store',
+                  default='trigprobe',
+                  dest='probedir',
+                  help='Directory where the probe files are')
+
+parser.add_option('--foutname', type='string', action='store',
+                  default='data.root',
+                  dest='foutname',
+                  help='name of the output root file: data.root or ttbar.root')
+
+parser.add_option('--applyfit', action="store_true",
+                  default=False,
+                  dest='applyfit',
+                  help='Apply fit: True or False')
 (options, args) = parser.parse_args()
 argv = []
 
-
-
-
+#options, remainder = parser.parse_args()
+if len(sys.argv[1:]) == 0:
+    print "no argument given!"
+    parser.print_help()
+    sys.exit(1)
 #type here an example of how to use this script: 
 
 #Setting up size of canvas
-H_ref = 600; 
-W_ref = 800; 
+H_ref = 1200; 
+W_ref = 1800; 
 W = W_ref
 H  = H_ref
 #c1 = TCanvas('c1',"Plot",1)
@@ -92,29 +109,31 @@ CMS_lumi.extraText = "Preliminary"
 #file & input histograms
 
 f1 = TFile(options.file)
-fout = TFile("data.root", "recreate")
+fout = TFile(options.foutname, "recreate")
+tag_d = options.tagdir
+probe_d = options.probedir
 if options.channel == 'e':
-    leptag_pt = f1.Get('trigtag/ele1__pt')
-    leptag_eta= f1.Get('trigtag/ele1__eta')
-    leptag_minDR_jet = f1.Get('trigtag/ele1__minDR_jet')
-    lepprobe_pt = f1.Get('trigprobe/ele1__pt')
-    lepprobe_eta= f1.Get('trigprobe/ele1__eta')
-    lepprobe_minDR_jet =f1.Get('trigprobe/ele1__minDR_jet')
+    leptag_pt = f1.Get(tag_d+'/ele1__pt')
+    leptag_eta= f1.Get(tag_d+'/ele1__eta')
+    leptag_minDR_jet = f1.Get(tag_d+'/ele1__minDR_jet')
+    lepprobe_pt = f1.Get(probe_d+'/ele1__pt')
+    lepprobe_eta= f1.Get(probe_d+'/ele1__eta')
+    lepprobe_minDR_jet =f1.Get(probe_d+'/ele1__minDR_jet')
 elif options.channel == 'mu':
-    leptag_pt = f1.Get('trigtag/muo1__pt')
-    leptag_eta= f1.Get('trigtag/muo1__eta')
-    leptag_minDR_jet = f1.Get('trigtag/muo1__minDR_jet')
-    lepprobe_pt = f1.Get('trigprobe/muo1__pt')
-    lepprobe_eta= f1.Get('trigprobe/muo1__eta')
-    lepprobe_minDR_jet =f1.Get('trigprobe/muo1__minDR_jet')
-jet1tag_pt=f1.Get('trigtag/jet1__pt')
-jet1tag_eta=f1.Get('trigtag/jet1__eta')
-jet2tag_pt=f1.Get('trigtag/jet2__pt')
-jet2tag_eta = f1.Get('trigtag/jet2__eta')
-jet1probe_pt=f1.Get('trigprobe/jet1__pt')
-jet1probe_eta=f1.Get('trigprobe/jet1__eta')
-jet2probe_pt=f1.Get('trigprobe/jet2__pt')
-jet2probe_eta =f1.Get('trigprobe/jet2__eta')
+    leptag_pt = f1.Get(tag_d+'/muo1__pt')
+    leptag_eta= f1.Get(tag_d+'/muo1__eta')
+    leptag_minDR_jet = f1.Get(tag_d+'/muo1__minDR_jet')
+    lepprobe_pt = f1.Get(probe_d+'/muo1__pt')
+    lepprobe_eta= f1.Get(probe_d+'/muo1__eta')
+    lepprobe_minDR_jet =f1.Get(probe_d+'/muo1__minDR_jet')
+jet1tag_pt=f1.Get(tag_d+'/jet1__pt')
+jet1tag_eta=f1.Get(tag_d+'/jet1__eta')
+jet2tag_pt=f1.Get(tag_d+'/jet2__pt')
+jet2tag_eta = f1.Get(tag_d+'/jet2__eta')
+jet1probe_pt=f1.Get(probe_d+'/jet1__pt')
+jet1probe_eta=f1.Get(probe_d+'/jet1__eta')
+jet2probe_pt=f1.Get(probe_d+'/jet2__pt')
+jet2probe_eta =f1.Get(probe_d+'/jet2__eta')
 
 ## Update canvas 
 gROOT.SetBatch(kTRUE)
@@ -129,9 +148,9 @@ useOR = options.useOR
 p = TH1F()
 q = TH1F()
 #lep pt 
-x= array("d",[0.,25.,50.,75.,100.,125.,150.,200.,300.,900.])
-p=lepprobe_pt.Rebin(9,"lepprobe_pt",x)
-q=leptag_pt.Rebin(9,"leptag_pt",x)
+x= array("d",[0.,25.,50.,75.,100.,125.,150.,200.,300.,500.,700.,900.])
+p=lepprobe_pt.Rebin(11,"lepprobe_pt",x)
+q=leptag_pt.Rebin(11,"leptag_pt",x)
 eff_lep_pt = TEfficiency(p,q)
 eff_lep_pt.SetMarkerStyle(20)
 if useOR =='True':
@@ -146,12 +165,13 @@ tgraph2 = eff_lep_pt.GetPaintedGraph()
 tgraph2.GetYaxis().SetRangeUser(0.,1.1)
 tgraph2.SetLineColor(0)
 tgraph2.SetMarkerStyle(20)
-fit = tgraph2.Fit("pol0",'S')
-value = fit.Parameter(0)
-error = fit.ParError(0)
+if (options.applyfit):
+    fit = tgraph2.Fit("pol0",'S')
+    value = fit.Parameter(0)
+    error = fit.ParError(0)
 #print value, error
 tgraph2.Draw("P")
-fout.WriteObject(tgraph2,"ele_pt")
+fout.WriteObject(tgraph2,"lep_pt")
 c1.Update()
 c1.SetGrid()
 gStyle.SetTitleFontSize(0.1)
@@ -162,10 +182,11 @@ text = TLatex()
 text.SetNDC()
 uppertitle = 'Tag-And-Probe('+ options.sample+')'
 text.DrawText(0.3,0.95,uppertitle)
-text2 = TLatex()
-text2.SetNDC()
-text2.SetTextSize(0.04)
-text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
+if (options.applyfit):
+    text2 = TLatex()
+    text2.SetNDC()
+    text2.SetTextSize(0.04)
+    text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
 ssleppt = 'TagNProbe_'+ options.sample+ '_' + options.channel + '_pt.png'
 c1.SaveAs(ssleppt)
 c1.Clear()
@@ -187,10 +208,12 @@ tgraph2 = eff_lep_eta.GetPaintedGraph()
 tgraph2.GetYaxis().SetRangeUser(0.,1.1)
 tgraph2.SetLineColor(0)
 tgraph2.SetMarkerStyle(20)
-fit = tgraph2.Fit("pol0",'S')
-value = fit.Parameter(0)
-error = fit.ParError(0)
+if (options.applyfit):
+    fit = tgraph2.Fit("pol0",'S')
+    value = fit.Parameter(0)
+    error = fit.ParError(0)
 tgraph2.Draw("P") 
+fout.WriteObject(tgraph2,"lep_eta")
 c1.Update()
 c1.SetGrid()
 gStyle.SetTitleFontSize(0.1)
@@ -200,10 +223,11 @@ CMS_lumi.CMS_lumi(c1,4,11)
 text = TLatex()
 text.SetNDC()
 text.DrawText(0.3,0.95,uppertitle)
-text2 = TLatex()
-text2.SetNDC()
-text2.SetTextSize(0.04)
-text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
+if (options.applyfit):
+    text2 = TLatex()
+    text2.SetNDC()
+    text2.SetTextSize(0.04)
+    text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
 sslepeta = 'TagNProbe_'+ options.sample+ '_' + options.channel + '_eta.png'
 c1.SaveAs(sslepeta)
 c1.Clear()
@@ -225,9 +249,10 @@ tgraph2 = eff_lep_minDR.GetPaintedGraph()
 tgraph2.GetYaxis().SetRangeUser(0.,1.1)
 tgraph2.SetLineColor(0)
 tgraph2.SetMarkerStyle(20)
-fit = tgraph2.Fit("pol0",'S')
-value = fit.Parameter(0)
-error = fit.ParError(0)
+if options.applyfit:
+    fit = tgraph2.Fit("pol0",'S')
+    value = fit.Parameter(0)
+    error = fit.ParError(0)
 tgraph2.Draw("P") 
 fout.WriteObject(tgraph2,"minDR")
 c1.Update()
@@ -239,19 +264,20 @@ CMS_lumi.CMS_lumi(c1,4,11)
 text = TLatex()
 text.SetNDC()
 text.DrawText(0.3,0.95,uppertitle)
-text2 = TLatex()
-text2.SetNDC()
-text2.SetTextSize(0.04)
-text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
+if options.applyfit:
+    text2 = TLatex()
+    text2.SetNDC()
+    text2.SetTextSize(0.04)
+    text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
 sslepDR = 'TagNProbe_'+ options.sample+ '_' + options.channel + '_minDR.png'
 c1.SaveAs(sslepDR)
 c1.Clear()
 #jet1_pt
 j1probe = TH1F()
 j1tag = TH1F()
-j1pt = array("d",[250.,350.,450.,650.,1000.])
-j1probe = jet1probe_pt.Rebin(4,"j1probe",j1pt)
-j1tag = jet1tag_pt.Rebin(4,"j1tag",j1pt)
+j1pt = array("d",[170.,200.,250.,300.,350.,400.,500.,700.,900.])
+j1probe = jet1probe_pt.Rebin(8,"j1probe",j1pt)
+j1tag = jet1tag_pt.Rebin(8,"j1tag",j1pt)
 eff_jet1_pt = TEfficiency(j1probe,j1tag)
 eff_jet1_pt.SetMarkerStyle(20)
 if useOR =='True':
@@ -266,11 +292,12 @@ tgraph2 = eff_jet1_pt.GetPaintedGraph()
 tgraph2.GetYaxis().SetRangeUser(0.,1.1)
 tgraph2.SetLineColor(0)
 tgraph2.SetMarkerStyle(20)
-fit = tgraph2.Fit("pol0",'S')
-value = fit.Parameter(0)
-error = fit.ParError(0)
+if options.applyfit:
+    fit = tgraph2.Fit("pol0",'S')
+    value = fit.Parameter(0)
+    error = fit.ParError(0)
 tgraph2.Draw("P") 
-fout.WriteObject(tgraph2,"jet1pt")
+fout.WriteObject(tgraph2,"jet1_pt")
 c1.Update()
 c1.SetGrid()
 gStyle.SetTitleFontSize(0.1)
@@ -280,10 +307,11 @@ CMS_lumi.CMS_lumi(c1,4,11)
 text = TLatex()
 text.SetNDC()
 text.DrawText(0.3,0.95,uppertitle)
-text2 = TLatex()
-text2.SetNDC()
-text2.SetTextSize(0.04)
-text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
+if options.applyfit:
+    text2 = TLatex()
+    text2.SetNDC()
+    text2.SetTextSize(0.04)
+    text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
 ssjet1pt = 'TagNProbe_'+ options.sample+ '_' + options.channel + '_jet1pt.png'
 c1.SaveAs(ssjet1pt)
 c1.Clear()
@@ -304,9 +332,10 @@ tgraph2 = eff_jet1_eta.GetPaintedGraph()
 tgraph2.GetYaxis().SetRangeUser(0.,1.1)
 tgraph2.SetLineColor(0)
 tgraph2.SetMarkerStyle(20)
-fit = tgraph2.Fit("pol0",'S')
-value = fit.Parameter(0)
-error = fit.ParError(0)
+if options.applyfit:
+    fit = tgraph2.Fit("pol0",'S')
+    value = fit.Parameter(0)
+    error = fit.ParError(0)
 tgraph2.Draw("P") 
 c1.Update()
 c1.SetGrid()
@@ -317,16 +346,14 @@ CMS_lumi.CMS_lumi(c1,4,11)
 text = TLatex()
 text.SetNDC()
 text.DrawText(0.3,0.95, uppertitle)
-text2 = TLatex()
-text2.SetNDC()
-text2.SetTextSize(0.04)
-text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
+if options.applyfit:
+    text2 = TLatex()
+    text2.SetNDC()
+    text2.SetTextSize(0.04)
+    text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
 ssjet1eta = 'TagNProbe_'+ options.sample+ '_' + options.channel + '_jet1eta.png'
 c1.SaveAs(ssjet1eta)
 c1.Clear()
-#jet2_pt
-#jet2probe_pt.Rebin(3)
-#jet2tag_pt.Rebin(3)
 j2pt = array("d",[75.,100.,150.,250.,350.,450.,650.,1000.])
 j2probe = jet2probe_pt.Rebin(7,"j2probe",j2pt)
 j2tag = jet2tag_pt.Rebin(7,"j2tag",j2pt)
@@ -344,11 +371,12 @@ tgraph2 = eff_jet2_pt.GetPaintedGraph()
 tgraph2.GetYaxis().SetRangeUser(0.,1.1)
 tgraph2.SetLineColor(0)
 tgraph2.SetMarkerStyle(20)
-fit = tgraph2.Fit("pol0",'S')
-value = fit.Parameter(0)
-error = fit.ParError(0)
+if options.applyfit:
+    fit = tgraph2.Fit("pol0",'S')
+    value = fit.Parameter(0)
+    error = fit.ParError(0)
 tgraph2.Draw("P") 
-fout.WriteObject(tgraph2,"jet2pt")
+fout.WriteObject(tgraph2,"jet2_pt")
 c1.Update()
 c1.SetGrid()
 gStyle.SetTitleFontSize(0.1)
@@ -358,10 +386,11 @@ CMS_lumi.CMS_lumi(c1,4,11)
 text = TLatex()
 text.SetNDC()
 text.DrawText(0.3,0.95,uppertitle)
-text2 = TLatex()
-text2.SetNDC()
-text2.SetTextSize(0.04)
-text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
+if options.applyfit:
+    text2 = TLatex()
+    text2.SetNDC()
+    text2.SetTextSize(0.04)
+    text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
 ssjet2pt = 'TagNProbe_'+ options.sample+ '_' + options.channel + '_jet2pt.png'
 c1.SaveAs(ssjet2pt)
 c1.Clear()
@@ -382,12 +411,13 @@ tgraph2 = eff_jet2_eta.GetPaintedGraph()
 tgraph2.GetYaxis().SetRangeUser(0.,1.1)
 tgraph2.SetLineColor(0)
 tgraph2.SetMarkerStyle(20)
-fit = tgraph2.Fit("pol0",'S')
-value = fit.Parameter(0)
-error = fit.ParError(0)
+if options.applyfit:
+    fit = tgraph2.Fit("pol0",'S')
+    value = fit.Parameter(0)
+    error = fit.ParError(0)
 tgraph2.Draw("P") 
 fout.WriteObject(tgraph2,"jet2eta")
-fout.Close()
+#fout.Close()
 c1.Update()
 c1.SetGrid()
 gStyle.SetTitleFontSize(0.1)
@@ -397,11 +427,42 @@ CMS_lumi.CMS_lumi(c1,4,11)
 text = TLatex()
 text.SetNDC()
 text.DrawText(0.3,0.95,uppertitle)
-text2 = TLatex()
-text2.SetNDC()
-text2.SetTextSize(0.04)
-text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
+if options.applyfit:
+    text2 = TLatex()
+    text2.SetNDC()
+    text2.SetTextSize(0.04)
+    text2.DrawText(0.2,0.45,'Eff:'+str("{0:.4f}".format(value))+'+/-'+str("{0:.4f}".format(error)))
 ssjet2eta = 'TagNProbe_'+ options.sample+ '_' + options.channel + '_jet2eta.png'
 c1.SaveAs(ssjet2eta)
 c1.Clear()
+#Create now the 2D Eff maps 
+pt_vs_eta_tag = f1.Get(tag_d+"/lep_pt_VS_lep_eta")
+pt_vs_eta_probe = f1.Get(probe_d+"/lep_pt_VS_lep_eta")
+pt_vs_eta_tag.SetTitle("Efficiency("+options.sample+")")
+pt_vs_eta_eff = pt_vs_eta_tag.Clone()
+#pt_vs_eta_tag.SetTitle("Efficiency("+options.sample+")")
+#clone_h = TEfficiency(den_h,num_h)
+c2 = TCanvas("c2","c2",1000,600)
+c2.Clear()
+c2.cd()
+#CMS_lumi.CMS_lumi(c2,4,11)
+pt_vs_eta_eff.Divide(pt_vs_eta_probe, pt_vs_eta_tag, 1.0, 1.0, "B")
+gStyle.SetPaintTextFormat("2.2f")
+pt_vs_eta_eff.SetMarkerSize(0.5)
+pt_vs_eta_eff.SetTitle("HLT Efficiency")
+pt_vs_eta_eff.Draw("TEXTE COLZ")
+#c1.SetTickx(0)
+#c1.SetTicky(1)
+c2.Update()
+c2.Modified()
+c2.SetGrid(0,0)
+CMS_lumi.CMS_lumi(c2,4,11)
+c2.SaveAs("Pt_vs_Eta_Eff_"+options.sample+ "__"+ options.probe+".png")
+#fout = TFile("HLT_Ele50PFJET_or_HLT_Ele105__TTbar__Eff.root", "recreate")
+#fout.cd()
+dir = fout.mkdir("PtEtaBins")
+dir.cd()
+dir.WriteObject(pt_vs_eta_eff,"ptetadata")
+#fout.Write()
+fout.Close()
 
